@@ -23,6 +23,7 @@ Everything in Phase 1 is infrastructure groundwork for Phase 2 onwards. No agent
 | ORM | Drizzle ORM | Type-safe SQL, schema-as-code; defined in tech-stack |
 | Styling | Tailwind CSS only | No component library in this phase; rich components arrive in Phase 4 |
 | Auth | Not implemented | Auth middleware is Phase 2 scope (`/api/health` is intentionally unprotected) |
+| Testing | Vitest + `@vitest/coverage-v8` | Native ESM runner that shares the TypeScript config; no separate transform needed. Tests run in Node environment against real `better-sqlite3` in-memory databases and Next.js route handlers called directly. |
 
 ## Schema Context
 
@@ -61,6 +62,21 @@ The home page at `/` is public (no auth). It introduces AgentClinic to human vis
 - **Footer** — brand name + tagline; no links needed in Phase 1
 
 The page must be a React Server Component (`async` function or plain function — no `"use client"`). Styling is Tailwind only; no images or icons are required in Phase 1.
+
+## Testing Context
+
+Four test files are required under `tests/`, mirroring the source structure:
+
+| File | Layer | What it covers |
+|------|-------|---------------|
+| `tests/db/migrate.test.ts` | Repository | `runMigrations` creates all five tables; idempotent when called twice |
+| `tests/db/seed.test.ts` | Repository | Exactly 10 ailments, 10 treatments, ≥ 10 mappings inserted; no duplicates on second run |
+| `tests/api/health.test.ts` | API route | `GET /api/health` returns HTTP 200 and exact body `{ "status": "ok" }` |
+| `tests/validation/phase-1.test.ts` | Acceptance | Machine-readable version of the automatable items in `validation.md` sections 2, 3, and 6 |
+
+All tests use an in-memory SQLite database (`new Database(':memory:')`). No file I/O, no network, no Next.js server process required.
+
+The checklist items that **cannot** be automated (browser rendering, nav links visible, no console errors) remain as manual checks in `validation.md`.
 
 ## Out of Scope for This Phase
 
