@@ -12,6 +12,7 @@ LLM:         Anthropic SDK — claude-sonnet (triage + diagnosis, prescription r
 Database:    SQLite via better-sqlite3 + Drizzle ORM
 Real-time:   Server-Sent Events (SSE) — dashboard live updates
 Auth:        Single API key via env var (Bearer token on /api/* routes)
+Testing:     Vitest — unit, integration, API route, and phase validation tests
 ```
 
 ## Stack Decisions
@@ -23,10 +24,11 @@ Auth:        Single API key via env var (Bearer token on /api/* routes)
 | Database | SQLite via `better-sqlite3` | File-based, zero-config. Sufficient for MVP scale. Single-file backup/restore. |
 | ORM | Drizzle ORM | Type-safe SQL, schema-as-code, strong SQLite support |
 | LLM | `@anthropic-ai/sdk` | Powers triage, diagnosis, and prescription rationale generation |
-| Styling | Tailwind CSS | Utility-first, consistent with Next.js ecosystem |
+| Styling | Tailwind CSS, mobile-first | Utility-first, consistent with Next.js ecosystem. All UI must be fully usable on mobile, tablet, and desktop using Tailwind's sm/md/lg/xl breakpoints. |
 | Charts | Recharts | Dashboard visualizations (ailment frequency, severity distribution) |
 | SSE | Native `ReadableStream` in API routes | Live dashboard updates without WebSocket infrastructure |
 | Auth (MVP) | Single key via `AGENTCLINIC_API_KEY` env var | Dashboard is unprotected (private deployment assumed). Multi-tenant auth is post-MVP. |
+| Testing | Vitest + `@vitest/coverage-v8` | Fast native ESM runner; shares the same TypeScript config. Covers domain logic, SQLite repositories, API route handlers, and phase validation checklists. |
 
 ## Key Configuration
 
@@ -42,6 +44,30 @@ Environment variables (`.env`):
 | `EXPIRE_CHECK_INTERVAL_MINUTES` | `15` | Background job interval |
 | `RATE_LIMIT_VISITS_PER_HOUR` | `10` | Per-patient rate limit (enforced via DB count) |
 
+## Responsive Design
+
+All pages and components follow a **mobile-first** approach. The interface must be fully usable at every standard breakpoint:
+
+| Breakpoint | Min width | Typical context |
+|-----------|-----------|----------------|
+| (base)    | 0px       | Mobile phones (320px+) |
+| `sm`      | 640px     | Large phones |
+| `md`      | 768px     | Tablets — layout pivot point |
+| `lg`      | 1024px    | Laptops / small desktops |
+| `xl`      | 1280px    | Wide desktops |
+
+Navigation pattern:
+- **≥ md:** Horizontal nav bar — brand name left, all links inline right.
+- **< md:** Brand name left, hamburger button (`☰` / `✕`) right. Tap opens a full-width vertical dropdown; tap a link closes it. Implemented as a `"use client"` component (`app/components/NavMenu.tsx`) to isolate toggle state from the server layout.
+
+Content pattern:
+- Single-column stacking on mobile, multi-column grids on `md+`.
+- Font sizes and spacing scale with breakpoints (e.g. `text-3xl md:text-5xl`).
+- Max content width `max-w-7xl` centered with horizontal padding at all sizes.
+- No horizontal scrollbar at any supported viewport (minimum 320px).
+
+Responsiveness is a **merge blocker** for any phase that ships UI.
+
 ## Architecture Notes
 
 - **Two LLM calls per visit:** one for triage + diagnosis, one for prescription rationale. Separated so treatment history filtering stays in application code (deterministic, testable) while nuanced reasoning goes to the LLM.
@@ -50,6 +76,33 @@ Environment variables (`.env`):
 - **SSE:** in-memory event bus singleton. On reconnect, dashboard re-fetches full state via API (ring buffer is post-MVP).
 - **Background jobs:** `setInterval` in `src/instrumentation.ts` — visit expiration and chronic condition flagging, every 15 minutes.
 - **Referrals table:** lightweight table tracking referral events and operator acknowledgements (separate from the core visit schema).
+
+## Testing Strategy
+
+All tests live under `tests/`, mirroring the source structure:
+
+```
+tests/
+  db/           # repository / integration tests (in-memory SQLite)
+  api/          # API route handler tests (web Request/Response)
+  domain/       # pure domain logic — no I/O
+  validation/   # automated phase checklists (mirrors specs/*/validation.md)
+```
+
+| Layer | What is tested | Approach |
+|-------|---------------|----------|
+| Domain logic | Triage scoring, effectiveness ranking, rate-limit counting, recurrence flag | Pure function calls — no DB, no HTTP |
+| Repository / DB | `runMigrations`, `runSeed`, CRUD queries | `better-sqlite3` with `new Database(':memory:')` — real SQL, isolated per test |
+| API routes | Next.js route handlers (`GET /api/health`, etc.) | Direct function calls with `new Request(...)` — no HTTP server needed |
+| Phase validation | Key assertions from each `validation.md` checklist | Integration — starts a real DB, calls real handlers, asserts documented criteria |
+
+Scripts:
+
+| Command | Description |
+|---------|-------------|
+| `npm test` | Run all tests once (`vitest run`) |
+| `npm run test:watch` | Interactive watch mode (`vitest`) |
+| `npm run test:coverage` | Run with V8 coverage report (`vitest run --coverage`) |
 
 ## Dependencies
 
@@ -69,7 +122,9 @@ Environment variables (`.env`):
     "@types/better-sqlite3": "^7.6.0",
     "@types/uuid": "^10.0.0",
     "@types/node": "^20.0.0",
-    "@types/react": "^18.3.0"
+    "@types/react": "^18.3.0",
+    "vitest": "^2.0.0",
+    "@vitest/coverage-v8": "^2.0.0"
   }
 }
 ```
