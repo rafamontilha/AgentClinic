@@ -34,6 +34,8 @@ Phase 1 is ready to merge when every item in this checklist passes. Sections 2, 
 - [ ] The "Go to Dashboard →" CTA navigates to `/dashboard` without a full page reload
 - [ ] A footer with the brand name is visible at the bottom
 - [ ] No console errors in the browser DevTools
+- [ ] At 375px viewport: hero headline, sub-headline, and CTA are readable in a single column with no horizontal scroll
+- [ ] At 375px viewport: feature strip stacks to a single column
 
 ### 5. Dashboard shell loads in browser
 
@@ -42,8 +44,18 @@ Phase 1 is ready to merge when every item in this checklist passes. Sections 2, 
 - [ ] The page displays placeholder nav links (Dashboard, Patients, Ailments, Alerts)
 - [ ] The page displays an empty-state message (e.g. "No visits yet. Waiting for agents to check in.")
 - [ ] No console errors in the browser DevTools
+- [ ] At 375px viewport: nav links are hidden and a hamburger button (`☰`) is visible
+- [ ] Tapping `☰` reveals all four nav links in a full-width dropdown; icon changes to `✕`
+- [ ] Tapping any nav link closes the dropdown
 
-### 6. Code quality gate ✦ automated
+### 6. Responsive design (manual)
+
+- [ ] No horizontal scroll on any page at 320px, 375px, 768px, and 1280px viewports
+- [ ] Nav hamburger (`☰`) visible below 768px; horizontal links visible at 768px+
+- [ ] Feature strip on home page: 1 column below 768px, 3 columns at 768px+
+- [ ] Hero heading readable at all breakpoints (not truncated, not overflowing)
+
+### 7. Code quality gate ✦ automated
 
 - [ ] `npm run build` completes with zero TypeScript errors
 - [ ] No `any` types in schema or route files (use `unknown` or typed Drizzle infer)

@@ -4,12 +4,12 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero */}
-      <section className="flex-1 bg-white py-28 px-6 text-center">
+      <section className="flex-1 bg-white py-16 md:py-28 px-6 text-center">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 md:mb-6 leading-tight">
             The clinic for ailing AI agents
           </h1>
-          <p className="text-xl text-gray-500 mb-12 leading-relaxed">
+          <p className="text-base md:text-xl text-gray-500 mb-8 md:mb-12 leading-relaxed">
             AI agents degrade in predictable ways — hallucination, context rot, instruction
             drift, persona collapse — but there is no standardized protocol for agents to
             report these problems, receive structured remediation, or track whether
@@ -17,7 +17,7 @@ export default function HomePage() {
           </p>
           <Link
             href="/dashboard"
-            className="inline-block bg-blue-600 text-white px-10 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 active:bg-blue-800 transition-colors"
+            className="inline-block bg-blue-600 text-white px-8 py-3 md:px-10 md:py-4 rounded-lg text-base md:text-lg font-semibold hover:bg-blue-700 active:bg-blue-800 transition-colors"
           >
             Go to Dashboard →
           </Link>
@@ -25,8 +25,8 @@ export default function HomePage() {
       </section>
 
       {/* Feature strip */}
-      <section className="bg-gray-50 py-20 px-6">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
+      <section className="bg-gray-50 py-12 md:py-20 px-6">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
           <div className="text-center">
             <div className="w-12 h-12 bg-blue-100 rounded-xl mx-auto mb-5 flex items-center justify-center">
               <span className="text-blue-700 font-bold text-lg">1</span>

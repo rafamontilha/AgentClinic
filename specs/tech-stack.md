@@ -24,7 +24,7 @@ Testing:     Vitest — unit, integration, API route, and phase validation tests
 | Database | SQLite via `better-sqlite3` | File-based, zero-config. Sufficient for MVP scale. Single-file backup/restore. |
 | ORM | Drizzle ORM | Type-safe SQL, schema-as-code, strong SQLite support |
 | LLM | `@anthropic-ai/sdk` | Powers triage, diagnosis, and prescription rationale generation |
-| Styling | Tailwind CSS | Utility-first, consistent with Next.js ecosystem |
+| Styling | Tailwind CSS, mobile-first | Utility-first, consistent with Next.js ecosystem. All UI must be fully usable on mobile, tablet, and desktop using Tailwind's sm/md/lg/xl breakpoints. |
 | Charts | Recharts | Dashboard visualizations (ailment frequency, severity distribution) |
 | SSE | Native `ReadableStream` in API routes | Live dashboard updates without WebSocket infrastructure |
 | Auth (MVP) | Single key via `AGENTCLINIC_API_KEY` env var | Dashboard is unprotected (private deployment assumed). Multi-tenant auth is post-MVP. |
@@ -43,6 +43,30 @@ Environment variables (`.env`):
 | `FOLLOWUP_WINDOW_HOURS` | `72` | Hours before a visit auto-expires |
 | `EXPIRE_CHECK_INTERVAL_MINUTES` | `15` | Background job interval |
 | `RATE_LIMIT_VISITS_PER_HOUR` | `10` | Per-patient rate limit (enforced via DB count) |
+
+## Responsive Design
+
+All pages and components follow a **mobile-first** approach. The interface must be fully usable at every standard breakpoint:
+
+| Breakpoint | Min width | Typical context |
+|-----------|-----------|----------------|
+| (base)    | 0px       | Mobile phones (320px+) |
+| `sm`      | 640px     | Large phones |
+| `md`      | 768px     | Tablets — layout pivot point |
+| `lg`      | 1024px    | Laptops / small desktops |
+| `xl`      | 1280px    | Wide desktops |
+
+Navigation pattern:
+- **≥ md:** Horizontal nav bar — brand name left, all links inline right.
+- **< md:** Brand name left, hamburger button (`☰` / `✕`) right. Tap opens a full-width vertical dropdown; tap a link closes it. Implemented as a `"use client"` component (`app/components/NavMenu.tsx`) to isolate toggle state from the server layout.
+
+Content pattern:
+- Single-column stacking on mobile, multi-column grids on `md+`.
+- Font sizes and spacing scale with breakpoints (e.g. `text-3xl md:text-5xl`).
+- Max content width `max-w-7xl` centered with horizontal padding at all sizes.
+- No horizontal scrollbar at any supported viewport (minimum 320px).
+
+Responsiveness is a **merge blocker** for any phase that ships UI.
 
 ## Architecture Notes
 

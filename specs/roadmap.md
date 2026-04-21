@@ -2,6 +2,8 @@
 
 Each phase delivers a testable capability. Phases are sized for 1–3 days of focused work. A phase is complete when its deliverables can be manually verified end-to-end.
 
+**Cross-cutting requirement — Responsive design:** Every phase that ships UI must be fully usable on mobile (≥ 320px), tablet (≥ 768px), and desktop (≥ 1024px). Responsiveness is a merge blocker. See `tech-stack.md` — Responsive Design section — for breakpoint standards and the nav hamburger pattern.
+
 ---
 
 ## Phase 1 — Hello Next.js

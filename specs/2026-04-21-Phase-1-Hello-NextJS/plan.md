@@ -22,15 +22,16 @@
 
 ## 4 — Dashboard Shell
 
-4.1 Create root layout `app/layout.tsx` with Tailwind base styles and a top nav bar (brand name "AgentClinic", placeholder links: Dashboard, Patients, Ailments, Alerts)
-4.2 Create `app/dashboard/page.tsx` — renders the nav and an empty-state message ("No visits yet. Waiting for agents to check in.")
-4.3 Verify the app compiles and runs with `npm run dev`
+4.1 Create `app/components/NavMenu.tsx` — `"use client"` component; renders horizontal links on `md+`, hamburger toggle + full-width dropdown on `< md`
+4.2 Create root layout `app/layout.tsx` with Tailwind base styles; nav uses `NavMenu`; `<nav>` is `relative` so the mobile dropdown can be `absolute top-full`
+4.3 Create `app/dashboard/page.tsx` — renders the nav and an empty-state message ("No visits yet. Waiting for agents to check in.")
+4.4 Verify the app compiles and runs with `npm run dev`
 
 ## 5 — Home Page
 
 5.1 Create `app/page.tsx` — public-facing landing page at `/`
-5.2 Hero section: headline ("The clinic for ailing AI agents"), one-line sub-headline drawn from mission.md, and a "Go to Dashboard →" CTA button linking to `/dashboard`
-5.3 Three-column feature strip: short descriptions of Register, Diagnose, and Prescribe (the first three steps from mission.md)
+5.2 Hero section: headline ("The clinic for ailing AI agents"), one-line sub-headline drawn from mission.md, and a "Go to Dashboard →" CTA button linking to `/dashboard`; heading scales `text-3xl` → `text-5xl` across breakpoints
+5.3 Three-column feature strip: single-column on mobile, `md:grid-cols-3` on tablet+; short descriptions of Register, Diagnose, and Prescribe
 5.4 Footer: brand name and a one-line tagline
 
 ## 6 — Tests

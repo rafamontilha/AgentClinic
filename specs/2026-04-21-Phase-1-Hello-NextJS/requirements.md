@@ -21,7 +21,7 @@ Everything in Phase 1 is infrastructure groundwork for Phase 2 onwards. No agent
 | Language | TypeScript (strict) | Type safety across the full stack — critical for catalog types and API contracts |
 | Database | SQLite via `better-sqlite3` | File-based, zero-config, sufficient for MVP; defined in tech-stack |
 | ORM | Drizzle ORM | Type-safe SQL, schema-as-code; defined in tech-stack |
-| Styling | Tailwind CSS only | No component library in this phase; rich components arrive in Phase 4 |
+| Styling | Tailwind CSS, mobile-first | No component library in this phase; rich components arrive in Phase 4. All pages must reflow correctly at mobile/tablet/desktop breakpoints. |
 | Auth | Not implemented | Auth middleware is Phase 2 scope (`/api/health` is intentionally unprotected) |
 | Testing | Vitest + `@vitest/coverage-v8` | Native ESM runner that shares the TypeScript config; no separate transform needed. Tests run in Node environment against real `better-sqlite3` in-memory databases and Next.js route handlers called directly. |
 
@@ -78,6 +78,20 @@ All tests use an in-memory SQLite database (`new Database(':memory:')`). No file
 
 The checklist items that **cannot** be automated (browser rendering, nav links visible, no console errors) remain as manual checks in `validation.md`.
 
+## Responsive Design Context
+
+All pages must be fully usable on mobile, tablet, and desktop. The implementation follows a **mobile-first** approach using Tailwind CSS breakpoints.
+
+Navigation behaviour:
+- **≥ md (768px):** Horizontal nav bar — brand name left, all four links inline right.
+- **< md (768px):** Brand name left, hamburger button (`☰` / `✕`) right. Tapping opens a full-width vertical dropdown; tapping any link closes it. Implemented as `app/components/NavMenu.tsx` (`"use client"`) so the toggle state is isolated from the server layout.
+
+Content behaviour:
+- Hero text scales: `text-3xl` on mobile → `text-5xl` on desktop.
+- Feature strip: single-column on mobile, three-column grid on `md+`.
+- Padding and spacing scale with breakpoints throughout.
+- No horizontal scroll at any supported viewport width (minimum 320px).
+
 ## Out of Scope for This Phase
 
 - API key authentication
@@ -85,4 +99,4 @@ The checklist items that **cannot** be automated (browser rendering, nav links v
 - LLM integration
 - SSE / real-time events
 - Dashboard data (charts, tables) — only the shell and nav
-- Animations, dark mode, or responsive breakpoints beyond basic mobile-friendliness
+- Animations and dark mode
