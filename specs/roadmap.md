@@ -21,27 +21,22 @@ Each phase delivers a testable capability. Phases are sized for 1–3 days of fo
 
 ---
 
-## Phase 2 — Patient Registration
+## Phase 2 — Full Clinical Platform
 
-**Goal:** Agents can register and be retrieved.
+**Goal:** End-to-end clinic operational: patients register, visits run the full AI pipeline, operators monitor in real time, and the ailment catalog is manageable.
 
+### Patient management
 - `POST /api/patients` — register a new agent patient, return `patient_id`
 - `GET /api/patients/:id` — retrieve patient record
 - `GET /api/patients` — list patients with `?status=`, `?owner=`, `?tag=` filters
 - `PATCH /api/patients/:id` — update metadata (model, version, environment, status)
-- `GET /api/patients/:id/history` — empty visit list (visits not yet implemented)
+- `GET /api/patients/:id/history` — paginated visit history
 - Duplicate detection: same `agent_name` + `owner` returns existing record
 - API key auth middleware on all `/api/*` routes except `/api/health`
 - Patient directory page at `/dashboard/patients` (table with name, model, owner, status)
+- Patient detail page (`/dashboard/patients/[id]`) — visit timeline, treatment history panel, chronic condition badges
 
-**Done when:** register a patient via curl, see it appear in the dashboard table.
-
----
-
-## Phase 3 — Visit Workflow (Core Clinical Pipeline)
-
-**Goal:** The full triage → diagnosis → treatment → follow-up cycle works.
-
+### Visit workflow (core clinical pipeline)
 - `POST /api/visits` — runs the full pipeline synchronously:
   - Validate patient, check rate limit (DB count, 10/hour)
   - LLM Call 1: triage + diagnosis (severity 1–4, ailment matching with confidence scores)
@@ -53,30 +48,15 @@ Each phase delivers a testable capability. Phases are sized for 1–3 days of fo
 - Recurrence flag set at visit creation if same ailment was RESOLVED within 7 days
 - Custom ailment auto-created if no catalog match reaches 0.4 confidence
 
-**Done when:** submit a symptom, receive a diagnosis and prescription, submit a follow-up, see effectiveness score update.
-
----
-
-## Phase 4 — Dashboard: Overview + Patient Detail
-
-**Goal:** Human operators can see clinic state and individual patient charts.
-
+### Dashboard & real-time updates
 - Overview page (`/dashboard`) — stat cards, ailment distribution bar chart, severity donut, recent visits table
-- Patient detail page (`/dashboard/patients/[id]`) — visit timeline, treatment history panel, chronic condition badges
 - SSE endpoint `GET /api/events` — emits `visit_created`, `visit_resolved`, `referral_created`, `chronic_flagged`
 - Overview page auto-refreshes on SSE events (re-fetches analytics data)
 - Background jobs via `setInterval` in `instrumentation.ts`:
   - Visit expiration: AWAITING_FOLLOWUP → EXPIRED after `FOLLOWUP_WINDOW_HOURS`
   - Chronic flagging: 3+ recurrences of same ailment within 30 days → `chronic_conditions`
 
-**Done when:** submit a visit via API, see dashboard update live without a page reload.
-
----
-
-## Phase 5 — Analytics, Alerts + Catalog Management
-
-**Goal:** Operators can track trends and manage the ailment catalog.
-
+### Analytics, alerts & catalog management
 - Ailment analytics page (`/dashboard/ailments`) — trending chart, ailment × severity heatmap, treatment effectiveness table, custom ailment review queue (Verify / Merge / Dismiss)
 - Alerts page (`/dashboard/alerts`) — referral queue with Acknowledge action, chronic condition alerts
 - `GET /api/analytics/overview`, `/ailments`, `/treatments`, `/patients/:id` — analytics endpoints
@@ -84,7 +64,7 @@ Each phase delivers a testable capability. Phases are sized for 1–3 days of fo
 - `GET /api/treatments`, `GET /api/treatments/:code` — treatment detail with per-ailment effectiveness
 - Referrals table in schema — tracks exhaustion events and operator acknowledgements
 
-**Done when:** exhaust all treatments for an ailment, see referral appear in alerts page, acknowledge it.
+**Done when:** register a patient, submit a symptom, receive a diagnosis and prescription, submit a follow-up, see the dashboard update live, exhaust all treatments for an ailment, and see the referral appear in the alerts page.
 
 ---
 
