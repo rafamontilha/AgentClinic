@@ -16,7 +16,7 @@ Each task group is a self-contained deliverable. Work top to bottom; later group
 
 ## Group 1 — Schema Extensions
 
-- Add `visits` table: `id`, `patient_id`, `status` (TRIAGE | DIAGNOSED | PRESCRIBED | AWAITING_FOLLOWUP | RESOLVED | EXPIRED), `severity` (1–4), `symptoms_text`, `created_at`, `resolved_at`
+- Add `visits` table: `id`, `patient_id`, `status` (TRIAGE | DIAGNOSED | PRESCRIBED | AWAITING_FOLLOWUP | RESOLVED | PARTIAL | FAILED | EXPIRED), `severity` (1–4), `symptoms_text`, `created_at`, `expires_at`, `resolved_at`
 - Add `diagnoses` table: `visit_id`, `ailment_code`, `confidence`, `is_primary`
 - Add `prescriptions` table: `visit_id`, `treatment_code`, `rationale`, `sequence`
 - Add `followups` table: `visit_id`, `outcome` (RESOLVED | PARTIAL | FAILED), `notes`, `submitted_at`
@@ -24,8 +24,9 @@ Each task group is a self-contained deliverable. Work top to bottom; later group
 - Add `chronic_conditions` table: `patient_id`, `ailment_code`, `first_flagged_at`, `recurrence_count`
 - Add `ailments` table: `code`, `name`, `category`, `is_custom`, `verified`, `created_at`
 - Add `treatments` table: `code`, `name`, `description`, `contraindications`
-- Add `ailment_treatments` table: `ailment_code`, `treatment_code`, `effectiveness_score`
+- Add `ailment_treatments` table: `ailment_code`, `treatment_code`, `effectiveness_score`, composite unique key on `(ailment_id, treatment_id)` or equivalent code-based uniqueness
 - Run `drizzle-kit generate` and apply migrations; verify seed populates 10 ailments + 10 treatments
+- Migration guards may ignore only explicit duplicate-column / already-exists cases; all other ALTER TABLE failures must fail loudly
 
 ## Group 2 — Patient Management API
 
@@ -33,7 +34,7 @@ Each task group is a self-contained deliverable. Work top to bottom; later group
 - `GET /api/patients` — list with `?status=`, `?owner=`, `?tag=` filters; paginated
 - `GET /api/patients/:id` — 404 if not found
 - `PATCH /api/patients/:id` — partial update of `model`, `version`, `environment`, `status`
-- `GET /api/patients/:id/history` — paginated visit list
+- `GET /api/patients/:id/history` — paginated visit list with safe numeric query parsing (`limit`/`offset` never reach the DB as `NaN`)
 - API key middleware: all `/api/*` except `/api/health` require `Authorization: Bearer <key>`; 401 if missing/invalid; skip check if `AGENTCLINIC_API_KEY` unset (dev mode)
 - Vitest: CRUD tests with in-memory SQLite; auth middleware unit tests
 
@@ -54,9 +55,10 @@ Each task group is a self-contained deliverable. Work top to bottom; later group
   3. Set recurrence flag if same primary ailment was RESOLVED within 7 days
   4. LLM Call 2 mock: return `{ prescriptions: [{ treatment_code, rationale }] }` — filtered from `ailment_treatments`; trigger referral if no treatments available
   5. Persist visit, diagnoses, prescriptions in one DB transaction; return full visit record
+- Wrap triage/prescription calls in structured error handling so timeouts, invalid JSON, and upstream failures return explicit JSON errors
 - `GET /api/visits/:id` — visit record with diagnoses and prescriptions
 - `GET /api/visits` — list with `?patient_id=`, `?status=`, `?ailment_code=` filters
-- `POST /api/visits/:id/followup` — validate status AWAITING_FOLLOWUP; insert followup; update effectiveness scores; set visit RESOLVED
+- `POST /api/visits/:id/followup` — validate status AWAITING_FOLLOWUP; insert followup; update effectiveness scores; set visit status to the submitted outcome; set `resolved_at` only for `RESOLVED`
 - LLM mock strategy: `vi.mock('@anthropic-ai/sdk')` in all tests; `mockLLMResponse()` helper in `tests/helpers/llm.ts`
 - Vitest: pipeline integration tests (full flow in-memory), rate limit, recurrence flag, custom ailment creation, referral trigger
 
@@ -65,7 +67,8 @@ Each task group is a self-contained deliverable. Work top to bottom; later group
 - In-memory singleton `EventBus` in `src/lib/event-bus.ts` — subscribe, emit, cleanup on disconnect
 - `GET /api/events` — SSE endpoint; streams `visit_created`, `visit_resolved`, `referral_created`, `chronic_flagged` events as `data: <JSON>\n\n`
 - Emit events from visit pipeline and background jobs
-- Vitest: EventBus unit tests (subscribe, emit, unsubscribe)
+- Client refresh helper handles `EventSource` error events explicitly
+- Vitest: EventBus unit tests (subscribe, emit, unsubscribe) plus route coverage for `/api/events` headers, delivery, and abort cleanup
 
 ## Group 6 — Analytics Endpoints
 
@@ -78,7 +81,7 @@ Each task group is a self-contained deliverable. Work top to bottom; later group
 ## Group 7 — Background Jobs
 
 - `src/instrumentation.ts` (Next.js instrumentation hook):
-  - Visit expiration: every `EXPIRE_CHECK_INTERVAL_MINUTES` minutes, set AWAITING_FOLLOWUP → EXPIRED where `created_at` is older than `FOLLOWUP_WINDOW_HOURS`
+  - Visit expiration: every `EXPIRE_CHECK_INTERVAL_MINUTES` minutes, set AWAITING_FOLLOWUP → EXPIRED where `expires_at` is in the past
   - Chronic flagging: count same-ailment recurrences per patient in 30-day window; if ≥ 3, insert/update `chronic_conditions`, emit `chronic_flagged`
 - Vitest: job logic as pure functions with clock injection; assert DB state after each run
 
@@ -86,10 +89,11 @@ Each task group is a self-contained deliverable. Work top to bottom; later group
 
 - `/dashboard` (Overview): stat cards (patients, active visits, resolved today, pending referrals), ailment distribution bar chart (Recharts), severity donut (Recharts), recent visits table; auto-refresh on SSE event
 - `/dashboard/patients`: table with name, model, owner, status; link to detail
-- `/dashboard/patients/[id]`: visit timeline, treatment history panel, chronic condition badges
-- `/dashboard/ailments`: trending chart, ailment × severity heatmap, effectiveness table, custom ailment review queue (Verify / Merge / Dismiss actions via server actions)
-- `/dashboard/alerts`: referral queue with Acknowledge action, chronic condition list
+- `/dashboard/patients/[id]`: visit timeline, treatment history panel, chronic condition badges, deterministic server/client date formatting
+- `/dashboard/ailments`: trending chart, ailment × severity heatmap, effectiveness table, custom ailment review queue (Verify / Merge / Dismiss actions via server actions + `revalidatePath`)
+- `/dashboard/alerts`: referral queue with Acknowledge action, chronic condition list, `revalidatePath` after mutations
 - All pages: responsive (mobile-first, hamburger nav below 768px, single-column mobile → CSS Grid multi-column at ≥ 768px via media queries in CSS modules)
+- Layout shell: export viewport metadata, set `data-theme` on `<html>`, keep `aria-controls` target mounted for mobile nav, and avoid inline styles where scoped CSS modules are sufficient
 - Vitest: page-level snapshot tests for empty state and populated state (mocked fetch)
 
 ## Group 9 — Phase 2 Validation Suite
@@ -100,3 +104,4 @@ Each task group is a self-contained deliverable. Work top to bottom; later group
 - Assert `chronic_conditions` row after 3 same-ailment visits in 30 days
 - Assert SSE event names match spec
 - Assert analytics endpoint shapes
+- Use `beforeEach` for fresh DB setup in validation/integration suites and clear LLM mocks between tests to avoid order-dependent failures

@@ -8,7 +8,7 @@ Phase 2 delivers the complete operational clinic on top of the Phase 1 skeleton.
 
 - Patient CRUD API (`/api/patients/*`)
 - Ailment and treatment catalog API (`/api/ailments`, `/api/treatments`)
-- Full visit pipeline (`POST /api/visits`): rate limiting, LLM triage, LLM prescription, recurrence detection, referral generation
+- Full visit pipeline (`POST /api/visits`): rate limiting, LLM triage, LLM prescription, recurrence detection, referral generation, structured LLM error handling
 - Visit retrieval and follow-up (`GET /api/visits`, `POST /api/visits/:id/followup`)
 - API key auth middleware on all `/api/*` routes except `/api/health`
 - Analytics endpoints (`/api/analytics/*`)
@@ -41,6 +41,7 @@ All Anthropic SDK calls are mocked via `vi.mock('@anthropic-ai/sdk')` in the Vit
 - **Call 1 (triage + diagnosis):** prompt includes `symptoms_text` and ailment catalog codes. Expected response: `{ severity: 1|2|3|4, diagnoses: [{ ailment_code: string, confidence: number }] }`.
 - **Call 2 (prescription):** prompt includes primary ailment, patient history, and candidate treatments filtered from `ailment_treatments`. Expected response: `{ prescriptions: [{ treatment_code: string, rationale: string }] }`.
 - Both calls use `ANTHROPIC_MODEL` env var (default `claude-sonnet-4-20250514`).
+- Route handlers must wrap LLM failures and invalid payload parsing in `try/catch` and return structured JSON errors instead of opaque uncaught 500s. Upstream LLM failures should surface as `502` with an explicit machine-readable error code.
 
 ### Auth Middleware
 
@@ -66,7 +67,13 @@ After treatment selection in Call 2, if `ailment_treatments` has no available tr
 
 ### Effectiveness Score Updates
 
-On follow-up submission, update `ailment_treatments.effectiveness_score` using an exponential moving average: `new_score = 0.8 * old_score + 0.2 * outcome_weight` where `outcome_weight` is `1.0` (RESOLVED), `0.5` (PARTIAL), `0.0` (FAILED).
+On follow-up submission, insert a `followups` row, set the visit status to match the submitted outcome (`RESOLVED`, `PARTIAL`, or `FAILED`), set `resolved_at` only for `RESOLVED`, and update `ailment_treatments.effectiveness_score` using an exponential moving average: `new_score = 0.8 * old_score + 0.2 * outcome_weight` where `outcome_weight` is `1.0` (RESOLVED), `0.5` (PARTIAL), `0.0` (FAILED).
+
+### Data Integrity
+
+- `visits` includes an `expires_at` timestamp used by expiration jobs; expiration logic must compare against `expires_at`, not `created_at`.
+- `ailment_treatments` enforces a composite `UNIQUE (ailment_id, treatment_id)` constraint so effectiveness updates cannot duplicate the same mapping pair.
+- Migration helpers may ignore only explicitly recognized "already exists" cases; all other DDL failures must surface and fail startup/tests.
 
 ### Background Jobs
 
@@ -80,6 +87,8 @@ In-memory singleton `EventBus`. On dashboard connect to `/api/events`, the clien
 
 React Server Components fetch data directly from service/repository functions (no HTTP round-trip for same-process calls). Client components that need SSE auto-refresh use `EventSource` and call `router.refresh()` on event receipt.
 
+Mutations triggered from dashboard server actions must call `revalidatePath()` for the affected route so operator-visible queues refresh immediately after actions such as ailment verification or referral acknowledgement.
+
 ### Styling: PicoCSS
 
 Tailwind CSS (used in Phase 1) is replaced by **PicoCSS v2** (`@picocss/pico`). PicoCSS styles semantic HTML elements directly — `<nav>`, `<article>`, `<table>`, `<button>`, `<input>` — with no utility classes.
@@ -90,7 +99,10 @@ Phase 2 scope includes migrating Phase 1 components (`NavMenu.tsx`, `app/layout.
 - Use semantic HTML elements so PicoCSS styles apply automatically (`<article>` for cards, `<nav>` for navigation, `<table>` for data tables).
 - Responsive layout via `<div class="grid">` (PicoCSS built-in grid) or CSS `@media (min-width: 768px)` overrides in scoped CSS modules (`*.module.css`).
 - Custom properties (CSS variables) for any color or spacing that overrides PicoCSS defaults — no inline `style=` attributes.
-- The hamburger nav toggle remains a `"use client"` component; show/hide is driven by a CSS class toggled in state, not Tailwind responsive variants.
+- The hamburger nav toggle remains a `"use client"` component; show/hide is driven by a CSS class toggled in state, not Tailwind responsive variants. The element referenced by `aria-controls` must always exist in the DOM even when collapsed.
+- Date/time text rendered in SSR routes must be deterministic between server and client; avoid locale-dependent hydration output such as raw `toLocaleString()` during hydration.
+- SSE-driven refresh components must handle `EventSource` errors explicitly so live updates fail visibly/recoverably rather than silently stopping.
+- `app/layout.tsx` exports viewport metadata with `width=device-width, initial-scale=1` and sets `data-theme` on `<html>` for PicoCSS theme support.
 - `tailwindcss` and `postcss`/`autoprefixer` Tailwind config are removed from `package.json` and `tailwind.config.*`.
 
 ---
@@ -102,3 +114,5 @@ Phase 1 delivered the scaffolding: Next.js 15, TypeScript, SQLite via Drizzle, `
 The responsive design contract from Phase 1 carries forward: all pages must be fully usable at ≥ 320px. The hamburger nav threshold is 768px; multi-column layout activates at ≥ 768px via CSS Grid and media queries (no Tailwind breakpoint classes).
 
 The Vitest infrastructure from Phase 1 carries forward: `tests/db/`, `tests/api/`, `tests/domain/`, `tests/validation/`. Phase 2 adds tests within the same structure.
+
+Query parameter parsing in API routes must fail safely: invalid numeric params such as `limit=abc` must clamp to a documented default or return `400`, but never flow through as `NaN` into repository/database calls.
