@@ -24,7 +24,7 @@ Testing:     Vitest — unit, integration, API route, and phase validation tests
 | Database | SQLite via `better-sqlite3` | File-based, zero-config. Sufficient for MVP scale. Single-file backup/restore. |
 | ORM | Drizzle ORM | Type-safe SQL, schema-as-code, strong SQLite support |
 | LLM | `@anthropic-ai/sdk` | Powers triage, diagnosis, and prescription rationale generation |
-| Styling | Tailwind CSS, mobile-first | Utility-first, consistent with Next.js ecosystem. All UI must be fully usable on mobile, tablet, and desktop using Tailwind's sm/md/lg/xl breakpoints. |
+| Styling | PicoCSS, mobile-first | Semantic HTML-first; styles elements directly with no utility classes. Minimal bundle, accessible defaults, CSS Grid built in. Responsive layout via media queries and PicoCSS grid. |
 | Charts | Recharts | Dashboard visualizations (ailment frequency, severity distribution) |
 | SSE | Native `ReadableStream` in API routes | Live dashboard updates without WebSocket infrastructure |
 | Auth (MVP) | Single key via `AGENTCLINIC_API_KEY` env var | Dashboard is unprotected (private deployment assumed). Multi-tenant auth is post-MVP. |
@@ -51,19 +51,21 @@ All pages and components follow a **mobile-first** approach. The interface must 
 | Breakpoint | Min width | Typical context |
 |-----------|-----------|----------------|
 | (base)    | 0px       | Mobile phones (320px+) |
-| `sm`      | 640px     | Large phones |
-| `md`      | 768px     | Tablets — layout pivot point |
-| `lg`      | 1024px    | Laptops / small desktops |
-| `xl`      | 1280px    | Wide desktops |
+| 640px     | 640px     | Large phones |
+| 768px     | 768px     | Tablets — layout pivot point |
+| 1024px    | 1024px    | Laptops / small desktops |
+| 1280px    | 1280px    | Wide desktops |
+
+Breakpoints are implemented as standard CSS `@media (min-width: ...)` queries. PicoCSS provides no utility breakpoint classes — layout switching is done via CSS Grid with `grid-template-columns` overrides inside media queries, or via PicoCSS's built-in responsive grid (`<div class="grid">`).
 
 Navigation pattern:
-- **≥ md:** Horizontal nav bar — brand name left, all links inline right.
-- **< md:** Brand name left, hamburger button (`☰` / `✕`) right. Tap opens a full-width vertical dropdown; tap a link closes it. Implemented as a `"use client"` component (`app/components/NavMenu.tsx`) to isolate toggle state from the server layout.
+- **≥ 768px:** Horizontal nav bar — brand name left, all links inline right.
+- **< 768px:** Brand name left, hamburger button (`☰` / `✕`) right. Tap opens a full-width vertical dropdown; tap a link closes it. Implemented as a `"use client"` component (`app/components/NavMenu.tsx`) to isolate toggle state from the server layout; custom CSS handles the show/hide transition.
 
 Content pattern:
-- Single-column stacking on mobile, multi-column grids on `md+`.
-- Font sizes and spacing scale with breakpoints (e.g. `text-3xl md:text-5xl`).
-- Max content width `max-w-7xl` centered with horizontal padding at all sizes.
+- Single-column stacking on mobile, multi-column CSS Grid on ≥ 768px.
+- PicoCSS typography scales automatically; override font sizes with scoped CSS or CSS custom properties where needed.
+- Max content width constrained via `max-width` on a wrapper element, centered with `margin: auto`.
 - No horizontal scrollbar at any supported viewport (minimum 320px).
 
 Responsiveness is a **merge blocker** for any phase that ships UI.
@@ -113,6 +115,7 @@ Scripts:
     "@anthropic-ai/sdk": "^0.30.0",
     "better-sqlite3": "^11.0.0",
     "drizzle-orm": "^0.33.0",
+    "@picocss/pico": "^2.0.0",
     "recharts": "^2.12.0",
     "uuid": "^10.0.0"
   },
