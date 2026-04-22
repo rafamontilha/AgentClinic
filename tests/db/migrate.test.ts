@@ -17,7 +17,7 @@ describe("runMigrations", () => {
     db = new Database(":memory:");
   });
 
-  it("creates all five core tables", () => {
+  it("creates all five core tables from Phase 1", () => {
     runMigrations(db);
     const names = tables(db);
     expect(names).toContain("patients");
@@ -27,9 +27,19 @@ describe("runMigrations", () => {
     expect(names).toContain("ailment_treatments");
   });
 
-  it("creates exactly five tables — no extras", () => {
+  it("creates all five Phase 2 tables", () => {
     runMigrations(db);
-    expect(tables(db)).toHaveLength(5);
+    const names = tables(db);
+    expect(names).toContain("diagnoses");
+    expect(names).toContain("prescriptions");
+    expect(names).toContain("followups");
+    expect(names).toContain("referrals");
+    expect(names).toContain("chronic_conditions");
+  });
+
+  it("creates exactly ten tables total", () => {
+    runMigrations(db);
+    expect(tables(db)).toHaveLength(10);
   });
 
   it("is idempotent — running twice does not throw", () => {
@@ -51,6 +61,22 @@ describe("runMigrations", () => {
     expect(cols).toContain("status");
   });
 
+  it("visits table has resolved_at column", () => {
+    runMigrations(db);
+    const cols = (
+      db.prepare("PRAGMA table_info(visits)").all() as { name: string }[]
+    ).map((c) => c.name);
+    expect(cols).toContain("resolved_at");
+  });
+
+  it("ailments table has verified column", () => {
+    runMigrations(db);
+    const cols = (
+      db.prepare("PRAGMA table_info(ailments)").all() as { name: string }[]
+    ).map((c) => c.name);
+    expect(cols).toContain("verified");
+  });
+
   it("ailment_treatments table references ailments and treatments", () => {
     runMigrations(db);
     const fks = (
@@ -60,5 +86,15 @@ describe("runMigrations", () => {
     ).map((f) => f.table);
     expect(fks).toContain("ailments");
     expect(fks).toContain("treatments");
+  });
+
+  it("diagnoses table references visits", () => {
+    runMigrations(db);
+    const fks = (
+      db.prepare("PRAGMA foreign_key_list(diagnoses)").all() as {
+        table: string;
+      }[]
+    ).map((f) => f.table);
+    expect(fks).toContain("visits");
   });
 });

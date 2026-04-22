@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { NavMenu } from "./components/NavMenu";
+import "@picocss/pico/css/pico.min.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -8,26 +9,18 @@ export const metadata: Metadata = {
   description: "The clinic for ailing AI agents",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-gray-50 text-gray-900 antialiased">
-        {/* relative so the mobile dropdown can be absolute top-full */}
-        <nav className="relative bg-gray-900 text-white px-6 py-4 shadow-sm">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <Link
-              href="/"
-              className="text-xl font-bold tracking-tight hover:text-gray-300 transition-colors"
-            >
-              AgentClinic
+      <body>
+        <header className="app-header">
+          <nav>
+            <Link href="/">
+              <strong>AgentClinic</strong>
             </Link>
             <NavMenu />
-          </div>
-        </nav>
+          </nav>
+        </header>
         <main>{children}</main>
       </body>
     </html>
