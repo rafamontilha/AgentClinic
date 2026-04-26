@@ -1,0 +1,83 @@
+.statGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  text-align: center;
+}
+
+.statCard h2 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin: 0.25rem 0;
+}
+
+.statCard p {
+  color: var(--pico-muted-color);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.section {
+  margin-bottom: 2.5rem;
+}
+
+.section h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badgeActive   { background: #dcfce7; color: #166534; }
+.badgeChronic  { background: #fef9c3; color: #713f12; }
+.badgeReferral { background: #fee2e2; color: #991b1b; }
+
+.timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.timeline li {
+  border-left: 2px solid var(--pico-muted-border-color);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+.timeline li::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background: var(--pico-primary);
+  border-radius: 50%;
+  position: absolute;
+  left: -6px;
+  top: 1rem;
+}
+
+.reviewActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.reviewActions button {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+@media (min-width: 768px) {
+  .statGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

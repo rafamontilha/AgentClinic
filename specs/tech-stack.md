@@ -24,7 +24,7 @@ Testing:     Vitest — unit, integration, API route, and phase validation tests
 | Database | SQLite via `better-sqlite3` | File-based, zero-config. Sufficient for MVP scale. Single-file backup/restore. |
 | ORM | Drizzle ORM | Type-safe SQL, schema-as-code, strong SQLite support |
 | LLM | `@anthropic-ai/sdk` | Powers triage, diagnosis, and prescription rationale generation |
-| Styling | Tailwind CSS, mobile-first | Utility-first, consistent with Next.js ecosystem. All UI must be fully usable on mobile, tablet, and desktop using Tailwind's sm/md/lg/xl breakpoints. |
+| Styling | PicoCSS, mobile-first | Semantic HTML-first; styles elements directly with no utility classes. Minimal bundle, accessible defaults, CSS Grid built in. Responsive layout via media queries and PicoCSS grid. |
 | Charts | Recharts | Dashboard visualizations (ailment frequency, severity distribution) |
 | SSE | Native `ReadableStream` in API routes | Live dashboard updates without WebSocket infrastructure |
 | Auth (MVP) | Single key via `AGENTCLINIC_API_KEY` env var | Dashboard is unprotected (private deployment assumed). Multi-tenant auth is post-MVP. |
@@ -51,19 +51,21 @@ All pages and components follow a **mobile-first** approach. The interface must 
 | Breakpoint | Min width | Typical context |
 |-----------|-----------|----------------|
 | (base)    | 0px       | Mobile phones (320px+) |
-| `sm`      | 640px     | Large phones |
-| `md`      | 768px     | Tablets — layout pivot point |
-| `lg`      | 1024px    | Laptops / small desktops |
-| `xl`      | 1280px    | Wide desktops |
+| 640px     | 640px     | Large phones |
+| 768px     | 768px     | Tablets — layout pivot point |
+| 1024px    | 1024px    | Laptops / small desktops |
+| 1280px    | 1280px    | Wide desktops |
+
+Breakpoints are implemented as standard CSS `@media (min-width: ...)` queries. PicoCSS provides no utility breakpoint classes — layout switching is done via CSS Grid with `grid-template-columns` overrides inside media queries, or via PicoCSS's built-in responsive grid (`<div class="grid">`).
 
 Navigation pattern:
-- **≥ md:** Horizontal nav bar — brand name left, all links inline right.
-- **< md:** Brand name left, hamburger button (`☰` / `✕`) right. Tap opens a full-width vertical dropdown; tap a link closes it. Implemented as a `"use client"` component (`app/components/NavMenu.tsx`) to isolate toggle state from the server layout.
+- **≥ 768px:** Horizontal nav bar — brand name left, all links inline right.
+- **< 768px:** Brand name left, hamburger button (`☰` / `✕`) right. Tap opens a full-width vertical dropdown; tap a link closes it. Implemented as a `"use client"` component (`app/components/NavMenu.tsx`) to isolate toggle state from the server layout; custom CSS handles the show/hide transition.
 
 Content pattern:
-- Single-column stacking on mobile, multi-column grids on `md+`.
-- Font sizes and spacing scale with breakpoints (e.g. `text-3xl md:text-5xl`).
-- Max content width `max-w-7xl` centered with horizontal padding at all sizes.
+- Single-column stacking on mobile, multi-column CSS Grid on ≥ 768px.
+- PicoCSS typography scales automatically; override font sizes with scoped CSS or CSS custom properties where needed.
+- Max content width constrained via `max-width` on a wrapper element, centered with `margin: auto`.
 - No horizontal scrollbar at any supported viewport (minimum 320px).
 
 Responsiveness is a **merge blocker** for any phase that ships UI.
@@ -104,6 +106,43 @@ Scripts:
 | `npm run test:watch` | Interactive watch mode (`vitest`) |
 | `npm run test:coverage` | Run with V8 coverage report (`vitest run --coverage`) |
 
+## Known Gaps and Deferred Decisions
+
+These four concerns were confirmed as in-scope during stakeholder review (2026-04-26). None block Phase 3, but each is a gate for production launch.
+
+### 1. Staff Dashboard Auth
+The operator dashboard (`/dashboard/*`) is currently unprotected — no login gate. The API itself is guarded by `AGENTCLINIC_API_KEY`, but the dashboard is assumed to be on a private network. Before any public-facing or shared deployment, add basic session-cookie auth (no OAuth required for MVP). A full auth provider (NextAuth, Clerk) is post-MVP.
+
+**Targeted phase:** Phase 4.
+
+### 2. TypeScript SDK — npm Publishing
+`packages/sdk` is built and locally tested in Phase 3, but not published. Before the SDK can be embedded by external agent developers (the primary audience), it must be:
+- Versioned independently of the app
+- Published to npm as `@agentclinic/sdk`
+- Distributed as CommonJS + ESM dual build with `.d.ts` types
+
+Public publishing is Post-MVP. Phase 3 delivers a working, locally-installable package.
+
+**Targeted phase:** Post-MVP (after SDK is stable for 1 release cycle).
+
+### 3. Database — Postgres for Production
+SQLite works for local dev and early demos. Before any durable, multi-user deployment the database must migrate to PostgreSQL 16+. Drizzle's dialect switch is a config change; SQL queries need review for dialect compatibility. This is a hard prerequisite for the deployment phase.
+
+**Targeted phase:** Phase 5 (before deployment).
+
+### 4. Deployment Target
+The deployment target was not locked at project start. The choice gates runtime constraints:
+
+| Option | Implication |
+|---|---|
+| Vercel (serverless) | SQLite incompatible on edge; requires Postgres + PgBouncer or Neon |
+| Self-hosted Node (Docker) | SQLite fine for dev; Postgres swap still needed for durability |
+| Railway / Render | Managed Postgres available; straightforward Docker deploy |
+
+Until resolved, avoid `runtime = 'edge'` annotations and avoid relying on the local filesystem for anything other than the SQLite dev database.
+
+**Targeted phase:** Phase 6 (final phase).
+
 ## Dependencies
 
 ```json
@@ -113,6 +152,7 @@ Scripts:
     "@anthropic-ai/sdk": "^0.30.0",
     "better-sqlite3": "^11.0.0",
     "drizzle-orm": "^0.33.0",
+    "@picocss/pico": "^2.0.0",
     "recharts": "^2.12.0",
     "uuid": "^10.0.0"
   },

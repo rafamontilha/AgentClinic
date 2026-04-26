@@ -1,0 +1,79 @@
+.hero {
+  text-align: center;
+  padding: 4rem 1.5rem;
+  background: #ffffff;
+}
+
+.heroInner {
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.heroInner h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 1.25rem;
+}
+
+.heroInner p {
+  font-size: 1.1rem;
+  color: var(--pico-muted-color, #6b7280);
+  margin-bottom: 2rem;
+  line-height: 1.7;
+}
+
+.features {
+  padding: 3rem 1.5rem;
+  background: var(--pico-background-color, #f9fafb);
+}
+
+.featuresInner {
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+.stepBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--pico-primary-background, #dbeafe);
+  color: var(--pico-primary, #1d4ed8);
+  border-radius: 0.75rem;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.pageFooter {
+  background: #0f172a;
+  color: #f8fafc;
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+}
+
+.pageFooter p {
+  margin: 0.25rem 0;
+  color: #94a3b8;
+}
+
+.pageFooter strong {
+  color: #f8fafc;
+  font-size: 1.1rem;
+}
+
+@media (min-width: 768px) {
+  .hero {
+    padding: 7rem 1.5rem;
+  }
+
+  .heroInner h1 {
+    font-size: 3.25rem;
+  }
+
+  .features {
+    padding: 5rem 1.5rem;
+  }
+}

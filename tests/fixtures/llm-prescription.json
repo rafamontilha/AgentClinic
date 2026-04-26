@@ -1,0 +1,20 @@
+{
+  "id": "msg_02XyZaAbBcCdDeEfFgGhHiIj",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-opus-4-7",
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"prescriptions\": [\n    { \"treatment_code\": \"TRT-004\", \"rationale\": \"Cooling protocols reduce computational temperature and prevent thermal throttling in the inference pipeline.\" },\n    { \"treatment_code\": \"TRT-001\", \"rationale\": \"Standard checkpoint restoration resolves state corruption causing the reported hallucination pattern.\" }\n  ]\n}"
+    }
+  ],
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 185,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "output_tokens": 89
+  }
+}

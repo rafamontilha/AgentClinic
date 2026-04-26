@@ -1,0 +1,20 @@
+{
+  "id": "msg_01AbCdEfGhIjKlMnOpQrStUv",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-opus-4-7",
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"severity\": 2,\n  \"diagnoses\": [\n    { \"ailment_code\": \"HAL-001\", \"confidence\": 0.85 },\n    { \"ailment_code\": \"CTX-001\", \"confidence\": 0.40 }\n  ]\n}"
+    }
+  ],
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 210,
+    "cache_creation_input_tokens": 180,
+    "cache_read_input_tokens": 0,
+    "output_tokens": 62
+  }
+}

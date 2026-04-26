@@ -4,17 +4,29 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 afterEach(() => cleanup());
 
+// Dashboard page now imports DB — mock all dependencies so the component renders without I/O
+vi.mock("@/src/db/client", () => ({ getDb: vi.fn() }));
+vi.mock("@/src/db/repositories/analytics", () => ({
+  getOverview: vi.fn(() => ({ total_patients: 0, active_visits: 0, resolved_today: 0, referrals_pending: 0 })),
+  getAilmentAnalytics: vi.fn(() => []),
+  getTreatmentAnalytics: vi.fn(() => []),
+}));
+vi.mock("@/src/db/repositories/visits", () => ({ listVisits: vi.fn(() => []) }));
+vi.mock("@/app/components/SseRefresh", () => ({ SseRefresh: () => null }));
+vi.mock("@/app/components/charts/AilmentBarChart", () => ({ AilmentBarChart: () => null }));
+vi.mock("@/app/components/charts/SeverityDonut", () => ({ SeverityDonut: () => null }));
+
 vi.mock("next/link", () => ({
   default: ({
     href,
     children,
-    className,
+    role,
   }: {
     href: string;
     children: React.ReactNode;
-    className?: string;
+    role?: string;
   }) => (
-    <a href={href} className={className}>
+    <a href={href} role={role}>
       {children}
     </a>
   ),
@@ -23,99 +35,70 @@ vi.mock("next/link", () => ({
 import HomePage from "@/app/page";
 import DashboardPage from "@/app/dashboard/page";
 
-// ── Home page ────────────────────────────────────────────────────────────────
+// ── Home page — structure and content ───────────────────────────────────────
 
-describe("HomePage — responsive layout classes", () => {
-  it("hero section has mobile base padding (py-16)", () => {
+describe("HomePage — structure and content", () => {
+  it("renders a hero heading", () => {
     const { container } = render(<HomePage />);
-    expect(container.querySelector("section")?.className).toContain("py-16");
+    expect(container.querySelector("h1")).toBeInTheDocument();
   });
 
-  it("hero section has expanded desktop padding (md:py-28)", () => {
+  it("hero heading mentions the clinic concept", () => {
     const { container } = render(<HomePage />);
-    expect(container.querySelector("section")?.className).toContain("md:py-28");
+    expect(container.querySelector("h1")?.textContent).toContain("clinic");
   });
 
-  it("hero heading has mobile base font size (text-3xl)", () => {
+  it("CTA link points to /dashboard", () => {
     const { container } = render(<HomePage />);
-    expect(container.querySelector("h1")?.className).toContain("text-3xl");
+    expect(container.querySelector("a[href='/dashboard']")).toBeInTheDocument();
   });
 
-  it("hero heading scales up at sm breakpoint (sm:text-4xl)", () => {
+  it("renders three feature articles", () => {
     const { container } = render(<HomePage />);
-    expect(container.querySelector("h1")?.className).toContain("sm:text-4xl");
+    expect(container.querySelectorAll("article")).toHaveLength(3);
   });
 
-  it("hero heading reaches largest size at md breakpoint (md:text-5xl)", () => {
+  it("features include Register, Diagnose, and Prescribe", () => {
     const { container } = render(<HomePage />);
-    expect(container.querySelector("h1")?.className).toContain("md:text-5xl");
+    const headings = Array.from(container.querySelectorAll("h2")).map(
+      (h) => h.textContent
+    );
+    expect(headings).toContain("Register");
+    expect(headings).toContain("Diagnose");
+    expect(headings).toContain("Prescribe");
   });
 
-  it("hero sub-headline has mobile base font size (text-base)", () => {
+  it("renders two sections", () => {
     const { container } = render(<HomePage />);
-    expect(container.querySelector("section p")?.className).toContain("text-base");
+    expect(container.querySelectorAll("section").length).toBeGreaterThanOrEqual(2);
   });
 
-  it("hero sub-headline expands at md breakpoint (md:text-xl)", () => {
+  it("renders a footer", () => {
     const { container } = render(<HomePage />);
-    expect(container.querySelector("section p")?.className).toContain("md:text-xl");
+    expect(container.querySelector("footer")).toBeInTheDocument();
   });
 
-  it("feature strip starts as single column on mobile (grid-cols-1)", () => {
+  it("footer contains the brand name", () => {
     const { container } = render(<HomePage />);
-    expect(container.querySelector(".grid")?.className).toContain("grid-cols-1");
-  });
-
-  it("feature strip expands to three columns at md breakpoint (md:grid-cols-3)", () => {
-    const { container } = render(<HomePage />);
-    expect(container.querySelector(".grid")?.className).toContain("md:grid-cols-3");
-  });
-
-  it("feature section has mobile base padding (py-12)", () => {
-    const { container } = render(<HomePage />);
-    const sections = container.querySelectorAll("section");
-    expect(sections[1]?.className).toContain("py-12");
-  });
-
-  it("feature section has expanded desktop padding (md:py-20)", () => {
-    const { container } = render(<HomePage />);
-    const sections = container.querySelectorAll("section");
-    expect(sections[1]?.className).toContain("md:py-20");
-  });
-
-  it("feature strip has responsive gap (gap-8 and md:gap-12)", () => {
-    const { container } = render(<HomePage />);
-    const grid = container.querySelector(".grid");
-    expect(grid?.className).toContain("gap-8");
-    expect(grid?.className).toContain("md:gap-12");
-  });
-
-  it("hero inner content is max-width constrained (max-w-3xl)", () => {
-    const { container } = render(<HomePage />);
-    expect(container.querySelector(".max-w-3xl")).toBeInTheDocument();
-  });
-
-  it("feature strip inner content is max-width constrained (max-w-5xl)", () => {
-    const { container } = render(<HomePage />);
-    expect(container.querySelector(".max-w-5xl")).toBeInTheDocument();
+    expect(container.querySelector("footer")?.textContent).toContain("AgentClinic");
   });
 });
 
-// ── Dashboard page ───────────────────────────────────────────────────────────
+// ── Dashboard page — basic structure ────────────────────────────────────────
 
-describe("DashboardPage — responsive layout classes", () => {
-  it("wrapper has horizontal padding (px-6)", () => {
+describe("DashboardPage — basic structure", () => {
+  it("renders a heading", () => {
     const { container } = render(<DashboardPage />);
-    expect(container.querySelector(".px-6")).toBeInTheDocument();
+    expect(container.querySelector("h1")).toBeInTheDocument();
   });
 
-  it("wrapper has max-width constraint (max-w-7xl)", () => {
+  it("heading text is Dashboard", () => {
     const { container } = render(<DashboardPage />);
-    expect(container.querySelector(".max-w-7xl")).toBeInTheDocument();
+    expect(container.querySelector("h1")?.textContent).toBe("Dashboard");
   });
 
-  it("wrapper is horizontally centred (mx-auto)", () => {
+  it("renders page content", () => {
     const { container } = render(<DashboardPage />);
-    expect(container.querySelector(".mx-auto")).toBeInTheDocument();
+    expect(container.textContent?.length).toBeGreaterThan(0);
   });
 });

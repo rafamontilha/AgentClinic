@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm uninstall *)",
+      "Bash(del \"C:\\\\Users\\\\rafae\\\\OneDrive\\\\Documentos\\\\Projetos\\\\DeepLearning_AI_Courses\\\\sc-spec-driven-development-files\\\\AgentClinic\\\\tailwind.config.ts\")",
+      "Bash(del \"C:\\\\Users\\\\rafae\\\\OneDrive\\\\Documentos\\\\Projetos\\\\DeepLearning_AI_Courses\\\\sc-spec-driven-development-files\\\\AgentClinic\\\\postcss.config.mjs\")",
+      "Bash(npm test *)",
+      "Bash(git add *)"
+    ]
+  }
+}
