@@ -53,6 +53,7 @@ beforeAll(() => {
   runMigrations(db);
   runSeed(db);
   delete process.env.AGENTCLINIC_API_KEY;
+  process.env.ANTHROPIC_API_KEY = "test-key";
 });
 
 // ── § 1: Schema & Seed ────────────────────────────────────────────────────────

@@ -8,13 +8,16 @@
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "sdk:build": "cd packages/sdk && tsc",
+    "sdk:test": "cd packages/sdk && vitest run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0",
     "@picocss/pico": "^2.1.1",
     "better-sqlite3": "^11.0.0",
     "drizzle-orm": "^0.33.0",
+    "iron-session": "^8.0.4",
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

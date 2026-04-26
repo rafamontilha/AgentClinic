@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/dashboard/patients", label: "Patients" },
   { href: "/dashboard/ailments", label: "Ailments" },
   { href: "/dashboard/alerts", label: "Alerts" },
+  { href: "/logout", label: "Sign out" },
 ];
 
 export function NavMenu() {

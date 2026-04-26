@@ -13,6 +13,14 @@ Core workflow:
 4. **Follow up** — the orchestrator reports whether treatment worked, feeding into effectiveness tracking
 5. **Monitor** — a web dashboard gives human operators visibility into patient load, ailment trends, and treatment outcomes
 
+## Stance: Passive and Reactive
+
+AgentClinic does not initiate contact. Agents or their orchestrators call in; the clinic responds. There are no scheduled check-ups, no proactive pings, no background polling of external systems. This is a deliberate architectural boundary: the clinic is a service, not an observer.
+
+## Primary API Consumer
+
+The primary day-to-day caller of the API is an **AI agent developer** — an individual embedding the TypeScript client SDK into their own agent or orchestrator. The SDK must be easy to drop in, well-typed, and require minimal configuration.
+
 ## Why It Exists
 
 AI agents degrade in predictable ways — hallucination, context rot, instruction drift, persona collapse — but there is no standardized protocol for agents to report these problems, receive structured remediation, or track whether remediation worked. AgentClinic closes that gap.
@@ -29,4 +37,5 @@ The medical metaphor is deliberate: agents are patients, degradation modes are a
 
 - AgentClinic does not directly modify agents. It returns prescriptions; the calling system executes them.
 - It is not a monitoring tool. It responds to reported symptoms — it does not poll or observe agents autonomously.
+- It does not proactively schedule check-ups or initiate follow-up workflows.
 - Multi-tenant access control, billing, and webhook notifications are out of scope for MVP.

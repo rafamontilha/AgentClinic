@@ -68,15 +68,66 @@ Each phase delivers a testable capability. Phases are sized for 1–3 days of fo
 
 ---
 
+---
+
+## Phase 4 — Staff Dashboard Auth
+
+**Goal:** The operator dashboard has a login gate. Unprotected `/dashboard/*` is no longer acceptable for any shared or public deployment.
+
+- Add session-cookie middleware to all `/dashboard/*` routes (Next.js middleware.ts)
+- Login page at `/login` — accepts a single staff password stored as `STAFF_PASSWORD` env var (bcrypt-hashed at startup)
+- Successful login sets a signed, httpOnly session cookie (`MAX_AGE = 8 hours`)
+- `/api/*` routes are unaffected (already protected by `AGENTCLINIC_API_KEY`)
+- `/api/health` remains public (no auth)
+- Logout route clears the cookie and redirects to `/login`
+- No user management UI — single shared password for MVP
+
+**Done when:** Navigating to `/dashboard` without a session redirects to `/login`; after login, dashboard is accessible; `/api/health` is still public.
+
+---
+
+## Phase 5 — Postgres Migration
+
+**Goal:** SQLite is replaced with PostgreSQL. This is the hard prerequisite for Phase 6 deployment.
+
+- Add `postgres` and `@neondatabase/serverless` (or `pg`) as dependencies
+- Update `drizzle.config.ts` to support both SQLite (dev) and Postgres (prod) via `DATABASE_URL` env var
+- Review all Drizzle schema definitions for dialect compatibility (text vs varchar, JSON storage, etc.)
+- Run `drizzle-kit generate` against Postgres dialect; apply migrations to a local Postgres instance
+- Update all repository tests to run against in-memory SQLite (unit) and a real Postgres test DB (integration, opt-in)
+- Remove all SQLite-specific workarounds from production code paths
+- Update `.env.example` with `DATABASE_URL` replacing `DATABASE_PATH`
+
+**Done when:** `npm run dev` with `DATABASE_URL=postgres://...` starts against Postgres with all tests passing.
+
+---
+
+## Phase 6 — Deployment
+
+**Goal:** The application runs in a production environment accessible to external users. Deployment target must be chosen before this phase begins (see `tech-stack.md` — Known Gaps).
+
+- Choose deployment target (Vercel + Neon / Railway / self-hosted Docker) and record decision in `tech-stack.md`
+- Write `Dockerfile` (if self-hosted) or `vercel.json` (if Vercel), with health check
+- Set all required env vars in the target environment
+- Confirm `GET /api/health` returns 200 from a public URL
+- Confirm `/dashboard` is protected and accessible only after login
+- Confirm a test patient can register and complete a visit end-to-end via the deployed API
+- Add a `DEPLOYMENT.md` to the project root documenting the target, env vars, and rollback steps
+
+**Done when:** End-to-end smoke test passes against the live deployment URL.
+
+---
+
 ## Post-MVP (Deferred)
 
-The following are explicitly out of scope for the initial release:
+The following are explicitly out of scope for the initial release (Phases 1–6):
 
+- npm publishing of `@agentclinic/sdk` (SDK built in Phase 3, published post-launch)
 - Multi-tenant auth (per-team API keys, RBAC)
-- Client SDK / auto follow-up submission
-- Webhooks / push notifications to external systems
+- Webhooks / push notifications to external systems (built in Phase 3, post-MVP to expose via UI)
 - Treatment A/B testing with randomized assignment
 - SSE ring buffer for replay on reconnect
 - Embeddings-based diagnosis (LLM calls used for MVP)
 - Historical log import
 - Billing and usage metering
+- Proactive check-ups or scheduled agent outreach (confirmed out of scope: clinic is passive/reactive)

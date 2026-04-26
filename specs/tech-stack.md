@@ -106,6 +106,43 @@ Scripts:
 | `npm run test:watch` | Interactive watch mode (`vitest`) |
 | `npm run test:coverage` | Run with V8 coverage report (`vitest run --coverage`) |
 
+## Known Gaps and Deferred Decisions
+
+These four concerns were confirmed as in-scope during stakeholder review (2026-04-26). None block Phase 3, but each is a gate for production launch.
+
+### 1. Staff Dashboard Auth
+The operator dashboard (`/dashboard/*`) is currently unprotected — no login gate. The API itself is guarded by `AGENTCLINIC_API_KEY`, but the dashboard is assumed to be on a private network. Before any public-facing or shared deployment, add basic session-cookie auth (no OAuth required for MVP). A full auth provider (NextAuth, Clerk) is post-MVP.
+
+**Targeted phase:** Phase 4.
+
+### 2. TypeScript SDK — npm Publishing
+`packages/sdk` is built and locally tested in Phase 3, but not published. Before the SDK can be embedded by external agent developers (the primary audience), it must be:
+- Versioned independently of the app
+- Published to npm as `@agentclinic/sdk`
+- Distributed as CommonJS + ESM dual build with `.d.ts` types
+
+Public publishing is Post-MVP. Phase 3 delivers a working, locally-installable package.
+
+**Targeted phase:** Post-MVP (after SDK is stable for 1 release cycle).
+
+### 3. Database — Postgres for Production
+SQLite works for local dev and early demos. Before any durable, multi-user deployment the database must migrate to PostgreSQL 16+. Drizzle's dialect switch is a config change; SQL queries need review for dialect compatibility. This is a hard prerequisite for the deployment phase.
+
+**Targeted phase:** Phase 5 (before deployment).
+
+### 4. Deployment Target
+The deployment target was not locked at project start. The choice gates runtime constraints:
+
+| Option | Implication |
+|---|---|
+| Vercel (serverless) | SQLite incompatible on edge; requires Postgres + PgBouncer or Neon |
+| Self-hosted Node (Docker) | SQLite fine for dev; Postgres swap still needed for durability |
+| Railway / Render | Managed Postgres available; straightforward Docker deploy |
+
+Until resolved, avoid `runtime = 'edge'` annotations and avoid relying on the local filesystem for anything other than the SQLite dev database.
+
+**Targeted phase:** Phase 6 (final phase).
+
 ## Dependencies
 
 ```json

@@ -37,9 +37,14 @@ describe("runMigrations", () => {
     expect(names).toContain("chronic_conditions");
   });
 
-  it("creates exactly ten tables total", () => {
+  it("creates exactly eleven tables total", () => {
     runMigrations(db);
-    expect(tables(db)).toHaveLength(10);
+    expect(tables(db)).toHaveLength(11);
+  });
+
+  it("creates webhook_endpoints table (Phase 3)", () => {
+    runMigrations(db);
+    expect(tables(db)).toContain("webhook_endpoints");
   });
 
   it("is idempotent — running twice does not throw", () => {

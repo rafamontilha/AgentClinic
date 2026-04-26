@@ -93,9 +93,9 @@ describe("NavMenu — responsive structure", () => {
     expect(getByTestId("desktop-links")).toBeInTheDocument();
   });
 
-  it("desktop link container contains 4 links", () => {
+  it("desktop link container contains 5 links", () => {
     const { getByTestId } = render(<NavMenu />);
-    expect(getByTestId("desktop-links").querySelectorAll("a")).toHaveLength(4);
+    expect(getByTestId("desktop-links").querySelectorAll("a")).toHaveLength(5);
   });
 
   it("hamburger button is present in the DOM", () => {
@@ -120,18 +120,18 @@ describe("NavMenu — responsive structure", () => {
 // ── Link inventory ───────────────────────────────────────────────────────────
 
 describe("NavMenu — link inventory", () => {
-  it("desktop container has exactly 4 links", () => {
+  it("desktop container has exactly 5 links", () => {
     const { getByTestId } = render(<NavMenu />);
-    expect(getByTestId("desktop-links").querySelectorAll("a")).toHaveLength(4);
+    expect(getByTestId("desktop-links").querySelectorAll("a")).toHaveLength(5);
   });
 
-  it("mobile dropdown has exactly 4 links when open", () => {
+  it("mobile dropdown has exactly 5 links when open", () => {
     render(<NavMenu />);
     fireEvent.click(screen.getByRole("button"));
-    expect(document.getElementById("mobile-nav")!.querySelectorAll("a")).toHaveLength(4);
+    expect(document.getElementById("mobile-nav")!.querySelectorAll("a")).toHaveLength(5);
   });
 
-  it("nav links cover Dashboard, Patients, Ailments, and Alerts", () => {
+  it("nav links cover Dashboard, Patients, Ailments, Alerts, and Sign out", () => {
     render(<NavMenu />);
     fireEvent.click(screen.getByRole("button"));
     const labels = Array.from(
@@ -141,6 +141,7 @@ describe("NavMenu — link inventory", () => {
     expect(labels).toContain("Patients");
     expect(labels).toContain("Ailments");
     expect(labels).toContain("Alerts");
+    expect(labels).toContain("Sign out");
   });
 
   it("nav links point to correct hrefs", () => {
@@ -153,5 +154,6 @@ describe("NavMenu — link inventory", () => {
     expect(hrefs).toContain("/dashboard/patients");
     expect(hrefs).toContain("/dashboard/ailments");
     expect(hrefs).toContain("/dashboard/alerts");
+    expect(hrefs).toContain("/logout");
   });
 });

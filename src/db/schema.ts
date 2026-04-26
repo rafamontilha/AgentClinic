@@ -116,6 +116,18 @@ export const chronic_conditions = sqliteTable("chronic_conditions", {
   recurrence_count: integer("recurrence_count").notNull().default(0),
 });
 
+export const webhook_endpoints = sqliteTable("webhook_endpoints", {
+  id: text("id").primaryKey(),
+  url: text("url").notNull(),
+  events: text("events").notNull(),
+  secret: text("secret").notNull(),
+  active: integer("active").notNull().default(1),
+  created_at: text("created_at").notNull(),
+});
+
+export type WebhookEndpoint = typeof webhook_endpoints.$inferSelect;
+export type NewWebhookEndpoint = typeof webhook_endpoints.$inferInsert;
+
 export type Patient = typeof patients.$inferSelect;
 export type NewPatient = typeof patients.$inferInsert;
 export type Visit = typeof visits.$inferSelect;

@@ -99,6 +99,15 @@ export function runMigrations(db: Database.Database): void {
       first_flagged_at INTEGER NOT NULL,
       recurrence_count INTEGER NOT NULL DEFAULT 0
     );
+
+    CREATE TABLE IF NOT EXISTS webhook_endpoints (
+      id         TEXT    PRIMARY KEY,
+      url        TEXT    NOT NULL,
+      events     TEXT    NOT NULL,
+      secret     TEXT    NOT NULL,
+      active     INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT    NOT NULL
+    );
   `);
 
   // Add columns to pre-existing tables (no-op if column already exists)
